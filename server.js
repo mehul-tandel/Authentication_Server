@@ -2,7 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
+const authenticateToken = require('./auth');
+
 const app = express();
+
+// Allowing CORS(Cross Origin Resource Sharing)
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "OPTIONS, GET, POST, PUT, PATCH, DELETE"
+    );
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+});
 
 app.use(express.json());
 
@@ -29,16 +42,6 @@ app.post('/login', (req, res) => {
     res.json({ accessToken: accessToken });
 })
 
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if  (token == null) return res.sendStatus(401);
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
-    })
-}
 
 app.listen(3000);
