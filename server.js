@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.get('/posts',authenticateToken , (req, res) => {
+app.get('/posts', auth.authenticateToken , (req, res) => {
     res.json(posts.filter(post => post.username === req.user.name));
 });
 
@@ -33,9 +33,21 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/signup', (req, res) => {
+    const check = "EXISTS (SELECT 1 FROM user_login WHERE email ='$1')";
     const email = req.body.username;
     const password = req.body.password;
+    console.log(email);
     // check if email already exists and then add to database
+    db.query(
+        `SELECT ${check};`,
+        [email]
+    ).then(res => console.log(res[0][0][check]))
+    .catch(err => console.log(err));
+})
+
+app.post('/something', (req,res) => {
+    const name = req.body.name;
+    console.log(name);
 })
 
 
