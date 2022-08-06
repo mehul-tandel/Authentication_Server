@@ -11,18 +11,34 @@ const app = express();
 app.use(express.json());
 
 // Login route
-app.post('/login', (req, res) => {
-    // authenticate user
-    const username = req.body.username;
-    const user = { name: username };
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
-    res.json({ accessToken: accessToken });
+app.post('/login', async (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    let match;
+
+    // get password hash
+    const sql = "SELECT pw_hash FROM user_login WHERE email = ?";
+    let pw_hash = await db.query(sql, [email]);
+    pw_hash = pw_hash[0][0];
+
+    // Compare password hash and send response
+    if (pw_hash !== undefined){
+        match = await bcrypt.compare(password, pw_hash.pw_hash);
+    }
+    if (match) {
+        const user = { name: email };
+        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+        res.json({ accessToken: accessToken });
+    }
+    else {
+        res.send("Invalid email or password.");
+    }
 });
 
 // Register a new user
 app.post('/signup', async (req, res) => {
     const sql = `SELECT email FROM user_login WHERE email = ?`;
-    const email = req.body.username;
+    const email = req.body.email;
     const password = req.body.password;
 
     // check if email already exists
@@ -39,12 +55,9 @@ app.post('/signup', async (req, res) => {
     }
 })
 
-// Get the list of all users
-app.get('/users', (req, res) => {
-    const sql = "SELECT email FROM user_login;";
-    db.query(sql)
-    .then(result => res.send(JSON.stringify(result[0])))
-    .catch(err => console.log(err));
+// Get some resource if user is authenticated
+app.get('/resource',auth.authenticateToken , (req, res) => {
+    res.send("==>RESOURCE<==");
 })
 
 
