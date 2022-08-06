@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
-const saltRounds = 10;
 
 exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -15,16 +13,3 @@ exports.authenticateToken = (req, res, next) => {
     });
 }
 
-
-exports.generateHash = (req, res, next) => {
-    const password = req.body.password;
-    const hash = bcrypt.hash(password, saltRounds)
-    // store this hash in database
-}
-
-exports.compareHash = (req, res, next) => {
-    const user = req.body.email;
-    const password = req.body.password;
-    //const hash = get hash of user from database
-    const result = bcrypt.compare(password, hash);
-}

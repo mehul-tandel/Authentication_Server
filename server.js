@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const auth =  require('./auth');
 const db = require('./database');
@@ -8,15 +9,15 @@ const db = require('./database');
 const app = express();
 
 // Allowing CORS(Cross Origin Resource Sharing)
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "OPTIONS, GET, POST, PUT, PATCH, DELETE"
-    );
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    next();
-});
+// app.use((req, res, next) => {
+//     res.setHeader("Access-Control-Allow-Origin", "*");
+//     res.setHeader(
+//         "Access-Control-Allow-Methods",
+//         "OPTIONS, GET, POST, PUT, PATCH, DELETE"
+//     );
+//     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//     next();
+// });
 
 app.use(express.json());
 
@@ -32,22 +33,32 @@ app.post('/login', (req, res) => {
     res.json({ accessToken: accessToken });
 });
 
-app.post('/signup', (req, res) => {
-    const check = "EXISTS (SELECT 1 FROM user_login WHERE email ='$1')";
+// Register a new user
+app.post('/signup', async (req, res) => {
+    const sql = `SELECT email FROM user_login WHERE email = ?`;
     const email = req.body.username;
     const password = req.body.password;
-    console.log(email);
-    // check if email already exists and then add to database
-    db.query(
-        `SELECT ${check};`,
-        [email]
-    ).then(res => console.log(res[0][0][check]))
-    .catch(err => console.log(err));
+
+    // check if email already exists
+    const exist = await db.query(sql, [email]);
+    if (exist[0].length === 1) {
+        res.status(409).send("Email already exists.");
+    }
+    else {
+        // add new user to database
+        const insert = "INSERT INTO user_login (email, pw_hash) VALUES (?,?)"
+        const pw_hash = await bcrypt.hash(password,10);
+        await db.query(insert,[email,pw_hash]);
+        res.status(201).send("User signed up successfully!");
+    }
 })
 
-app.post('/something', (req,res) => {
-    const name = req.body.name;
-    console.log(name);
+// Get the list of all users
+app.get('/users', (req, res) => {
+    const sql = "SELECT email FROM user_login;";
+    db.query(sql)
+    .then(result => res.send(JSON.stringify(result[0])))
+    .catch(err => console.log(err));
 })
 
 
