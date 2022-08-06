@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
 
+// database connection pool
 module.exports = mysql.createPool({
     host: 'localhost',
     user: 'root',
