@@ -1,10 +1,14 @@
 require('dotenv').config();
+const fs = require('fs');
+const https = require('https');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const auth =  require('./auth');
 const db = require('./database');
+
+const PORT = 3000;
 
 const app = express();
 
@@ -60,6 +64,9 @@ app.get('/resource',auth.authenticateToken , (req, res) => {
     res.send("==>RESOURCE<==");
 })
 
-
-
-app.listen(3000);
+https.createServer({
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
+}, app).listen(PORT, () => {
+    console.log(`Listening on port ${PORT}...`);
+})
